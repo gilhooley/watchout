@@ -1,12 +1,24 @@
 var randomX = function() {
-  return Math.random()*450;
+  return Math.random() * $('.container').width();
 }
 var randomY = function() {
-  return Math.random()*450;
+  return Math.random() * 450;
+}
+
+var gameOptions = {
+  height: 450,
+  width: "100%",
+  nEnemies: 10
+};
+
+var gameStats = {
+  score: 0,
+  bestScore: 0,
+  collisions: 0
 }
 
 var gameboard = d3.select('.container')
-  .append('svg').attr('width',"100%").attr('height', 450)
+  .append('svg').attr({"height": gameOptions.height, "width": gameOptions.width})
   .style('background','black');
 
 var drag = d3.behavior.drag()
@@ -58,9 +70,41 @@ var collisionCheck = function(enemy, callback) {
 };
 
 // bind this to enemy
-var collisionBind = function() {
+var collisionBind = function(endData) {
   var enemy = d3.select(this);
-  collisionCheck(enemy, function() {console.log('something has happened.')})
+  var startPos = {
+    x: parseFloat(enemy.attr('cx')),
+    y: parseFloat(enemy.attr('cy'))
+  };
+  var endPos = {
+    x: endData.x_axis,
+    y: endData.y_axis
+  };
+  return function (t) {
+    collisionCheck(enemy, onCollision);
+    var enemyNextPos = {
+      x: startPos.x + (endPos.x - startPos.x) * t,
+      y: startPos.y + (endPos.y - startPos.y) * t
+    };
+    enemy.attr('cx', enemyNextPos.x ).attr('cy', enemyNextPos.y);
+  };
+};
+
+var onCollision = function() {
+  updateBestScore();
+  gameStats.score = 0;
+  gameStats.collisions++;
+  return updateScore();
+};
+
+var updateScore = function() {
+  d3.select('#collisions-count').text(gameStats.collisions.toString());
+  return d3.select('#current-score').text(gameStats.score.toString());
+};
+
+var updateBestScore = function() {
+  gameStats.bestScore = Math.max(gameStats.bestScore, gameStats.score);
+  return d3.select('#best-score').text(gameStats.bestScore.toString());
 };
 
 
@@ -70,12 +114,10 @@ var update = function (data) {
   var enemies = gameboard.selectAll('.enemyCircle').data(data);
 
   // update
-  enemies.transition().duration(1000).attr('cx', function(d) { return d.x_axis; })
-    .attr('cy', function(d) { return d.y_axis; })
-    .attr('r', function(d) { return d.radius; })
-    .style('fill', function(d) {
-      return d.color;
-    }).tween("custom",collisionBind);
+  enemies
+    .transition()
+    .duration(2000)
+    .tween("custom",collisionBind);
 
   // enter
   enemies.enter().append('circle')
@@ -88,17 +130,17 @@ var update = function (data) {
     });
 
   // exit
-  enemies.exit().transition().duration(1000).remove();
-
-
-   // score adjustment in event of collision
+  enemies.exit().remove();
 
 };
 
+setInterval(function(){
+  gameStats.score++;
+  updateScore();
+  updateBestScore();
+},50);
 
-var counter = 0;
 setInterval(function() {
-  counter++;
-  update(createEnemies(10));
+  update(createEnemies(gameOptions.nEnemies));
   // playerInit(createPlayer());
-}, 1000);
+}, 2000);
