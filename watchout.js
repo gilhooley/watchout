@@ -44,6 +44,26 @@ var createEnemies = function(n) {
   return array;
 };
 
+// collision check
+var collisionCheck = function(enemy, callback) {
+
+  var radiusSum = parseFloat(enemy.attr('r')) + parseFloat(player.attr('r'));
+  var xDiff = parseFloat(enemy.attr('cx')) - parseFloat(player.attr('cx'));
+  var yDiff = parseFloat(enemy.attr('cy')) - parseFloat(player.attr('cy'));
+
+  var separation = Math.sqrt(Math.pow(xDiff, 2) + Math.pow(yDiff, 2));
+  if (separation < radiusSum) {
+   return callback(player, enemy);
+ }
+};
+
+// bind this to enemy
+var collisionBind = function() {
+  var enemy = d3.select(this);
+  collisionCheck(enemy, function() {console.log('something has happened.')})
+};
+
+
 var update = function (data) {
 
   // data join
@@ -54,9 +74,9 @@ var update = function (data) {
     .attr('cy', function(d) { return d.y_axis; })
     .attr('r', function(d) { return d.radius; })
     .style('fill', function(d) {
-      console.log('update');
       return d.color;
-    });
+    }).tween("custom",collisionBind);
+
   // enter
   enemies.enter().append('circle')
     .attr('class','enemyCircle')
@@ -64,14 +84,14 @@ var update = function (data) {
     .attr('cy', function(d) { return d.y_axis; })
     .attr('r', function(d) { return d.radius; })
     .style('fill', function(d) {
-      console.log('enter');
       return d.color;
-    })
+    });
 
   // exit
   enemies.exit().transition().duration(1000).remove();
 
 
+   // score adjustment in event of collision
 
 };
 
