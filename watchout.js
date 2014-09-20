@@ -1,5 +1,5 @@
 var randomX = function() {
-  return Math.random() * $('.container').width();
+  return Math.random() * parseInt(d3.select('.container').style('width'));
 }
 var randomY = function() {
   return Math.random() * 450;
@@ -141,6 +141,7 @@ setInterval(function(){
 },50);
 
 setInterval(function() {
+  gameOptions.nEnemies++;
   update(createEnemies(gameOptions.nEnemies));
   // playerInit(createPlayer());
 }, 2000);
